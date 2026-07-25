@@ -26,7 +26,7 @@
 
 - [Giới Thiệu](#giới-thiệu)
 - [Cơ Chế Tự Động Chọn Agent & Spawn Subagents](#cơ-chế-tự-động-chọn-agent--spawn-subagents)
-- [Triết Lý Thiết Kế](#triết-lý-thiết-kế)
+- [Triết Lý Thiết Kế Chi Tiết (Design Philosophy DSL)](#triết-lý-thiết-kế-chi-tiết-design-philosophy-dsl)
 - [Danh Sách 8 Agents](#danh-sách-8-agents)
 - [Kiến Trúc Pipeline 8 Giai Đoạn](#kiến-trúc-pipeline-8-giai-đoạn)
 - [Cài Đặt Tự Động 1-Click Global](#cài-đặt-tự-động-1-click-global)
@@ -43,12 +43,6 @@
 ## Giới Thiệu
 
 **Custom Agent AGY** là bộ sưu tập các **Custom System Prompts** được thiết kế để chạy trên nền tảng [Antigravity CLI](https://antigravity.dev) (v1.1.6+) hoặc bất kỳ AI Coding Agent nào hỗ trợ cơ chế `define_subagent` / `invoke_subagent`.
-
-**Dành cho ai?**
-- Solo developers muốn có quy trình phát triển chuẩn chỉnh như team chuyên nghiệp
-- Team leads cần chuẩn hóa workflow cho đội ngũ
-- Business Analysts muốn tận dụng AI cho requirement analysis & documentation
-- Bất kỳ ai muốn tối ưu năng suất phát triển phần mềm với AI agents
 
 ---
 
@@ -68,59 +62,89 @@ flowchart TD
     AutoSelect --> Spawn5["... Spawn các agents còn lại theo pipeline"]
 ```
 
-### Điểm nổi bật:
-
-1. **Auto Agent Selection:** Bạn không cần phải chọn thủ công từng agent. Orchestrator Agent sẽ tự động đọc `name` và `description` trong YAML frontmatter để chọn đúng agent cho từng công việc.
-2. **Dynamic Subagent Spawning:** Orchestrator tự động gọi `invoke_subagent` để spawn các subagents chạy song song (ví dụ: Architect + QC Test) hoặc chạy tuần tự theo quy trình pipeline 8 giai đoạn.
-3. **Chuyển đổi thủ công (Nếu muốn):** Bạn vẫn có thể gõ `/agents` trong TUI để chủ động switch sang một agent cụ thể bất kỳ lúc nào.
-
 ---
 
-## Triết Lý Thiết Kế
+## Triết Lý Thiết Kế Chi Tiết (Design Philosophy DSL)
 
-Tất cả agents được xây dựng trên 5 nguyên tắc cốt lõi, encode dưới dạng DSL để agent đọc hiểu:
+Tất cả 8 agents được xây dựng dựa trên 5 nguyên tắc kỹ thuật cốt lõi và cấu trúc **4-Part Harness**, được mã hóa dưới dạng Machine-Readable DSL:
 
 ```yaml
 # design_philosophy.dsl
+version: "2.0.0"
+description: "Bộ quy tắc thiết kế kiến trúc chuẩn mực dành cho AI Agents và Software Engineers"
+
 principles:
   - id: P1
-    name: "Lựa chọn hơn nỗ lực"
-    rule: "Chọn thư viện chuẩn công nghiệp (pino, Zod, Prisma), KHÔNG tự chế"
-    example: "Dùng bcrypt/argon2 cho password hashing, không viết crypto riêng"
+    name: "Kế thừa tiêu chuẩn công nghiệp"
+    rationale: "Bài toán đã có giải pháp tin cậy được cộng đồng kiểm chứng thì không bao giờ viết lại từ đầu."
+    rule: "Ưu tiên 100% việc sử dụng các thư viện chuẩn công nghiệp (như pino, Zod, Prisma, Argon2, Redis). KHÔNG tự chế crypto, validator, hay logger."
+    boundary: "Chỉ viết custom code khi không có thư viện mã nguồn mở uy tín nào đáp ứng được yêu cầu."
+    good_example: "Sử dụng Argon2id cho password hashing, Zod cho schema validation, Pino cho structured logging."
+    bad_example: "Tự viết hàm hash mật khẩu bằng SHA256 + salt thủ công, hoặc tự dùng Regex phức tạp để validate email."
 
   - id: P2
-    name: "Đơn giản hơn phức tạp"
-    rule: "Early return, single responsibility, no premature abstraction"
-    example: "Chỉ tách helper khi có >= 3 nơi dùng NGAY BÂY GIỜ"
+    name: "Tối giản thiết kế, loại bỏ phức tạp thừa"
+    rationale: "Mọi dòng code không cần thiết đều là nợ kỹ thuật (Tech Debt) và tiềm ẩn rủi ro lỗi."
+    rule: "Áp dụng triệt để nguyên lý YAGNI (You Aren't Gonna Need It) & KISS. Code viết phẳng (flat code), ưu tiên early returns và single responsibility."
+    boundary: "KHÔNG tách class trừu tượng, interface, hoặc helper utility trừ khi có ít nhất 3 nơi sử dụng THỰC TẾ NGAY BÂY GIỜ."
+    good_example: |
+      if (!user) return res.status(404).json({ error: "USER_NOT_FOUND" });
+      if (!user.isActive) return res.status(403).json({ error: "USER_INACTIVE" });
+    bad_example: "Tạo GenericAbstractBaseUserRepositoryFactoryImpl chỉ để thực hiện 1 câu lệnh SELECT đơn giản."
 
   - id: P3
-    name: "Hiệu suất có đo lường"
-    rule: "Chỉ tối ưu nơi đo được bottleneck, không premature optimize"
-    example: "Thêm index SAU KHI EXPLAIN cho thấy full table scan"
+    name: "Hiệu suất dựa trên dữ liệu đo lường thực tế"
+    rationale: "Tối ưu hóa cảm tính khi chưa có dữ liệu đo lường chỉ làm code thêm phức tạp mà không đem lại giá trị."
+    rule: "Chỉ tối ưu hóa hiệu năng khi có bằng chứng thực tế từ profiler, metrics, hoặc Database EXPLAIN Plan."
+    boundary: "Mọi đề xuất thêm Database Index, Redis Cache, hoặc Worker Thread đều phải đi kèm kết quả đo lường trước/sau."
+    good_example: "Chạy EXPLAIN ANALYZE thấy Full Table Scan -> Thêm Composite Index (user_id, status)."
+    bad_example: "Bọc tất cả query vào Redis Cache dù bảng dữ liệu chỉ có 50 dòng data tĩnh."
 
   - id: P4
-    name: "Giám sát từ Dev đến Production"
-    rule: "Structured logging, correlation ID, error tracking từ ngày đầu"
-    example: "Mỗi request handler phải có requestId xuyên suốt"
+    name: "Giám sát toàn diện từ Dev đến Production"
+    rationale: "Hệ thống không thể quan sát được (Unobservable) là hệ thống không thể vận hành tin cậy trên Production."
+    rule: "Tính năng chỉ được coi là hoàn thành (Done) khi đã tích hợp sẵn Structured Logging, Correlation ID, và Error Tracking ngay từ dòng code đầu tiên."
+    boundary: "Mọi HTTP Request, Cron Job, hay Message Queue phải truyền và kế thừa Correlation ID (requestId/traceId) xuyên suốt tất cả các tầng."
+    good_example: "Header X-Request-ID được tạo từ Gateway/Middleware và tự động đính kèm vào mọi dòng log của request đó."
+    bad_example: "Bắt được lỗi ở Controller nhưng log ra mà không có Trace ID để truy vết nguyên nhân ban đầu."
 
   - id: P5
-    name: "Mỗi dòng log phải có ý nghĩa"
-    rule: "JSON structured, trả lời được: Gì xảy ra? Với ai? Kết quả?"
-    example: |
+    name: "Mỗi dòng log phải mang giá trị ngữ cảnh"
+    rule: "Tất cả log output phải ở định dạng JSON Structured, chứa đầy đủ ngữ cảnh để máy tính và con người đều có thể query/filter chính xác."
+    boundary: "KHÔNG dùng console.log('here'), console.log(err) hay chuỗi text không cấu trúc. Mỗi dòng log phải trả lời 4 câu hỏi: Chuyện gì xảy ra? Khi nào? Với đối tượng nào? Kết quả ra sao?"
+    good_example: |
       logger.info({
-        event: "order.created",
-        orderId: "ord_123",
-        userId: "usr_456",
-        duration: 145
+        timestamp: "2026-07-25T16:20:00.000Z",
+        level: "info",
+        traceId: "req_xyz789",
+        event: "order.payment_processed",
+        metadata: { orderId: "ord_123", userId: "usr_456", amount: 500000, durationMs: 142 }
       })
+    bad_example: "console.log('Payment success for order ' + orderId);"
 
 agent_structure:
-  format: "4-part harness"
+  format: "4-Part Harness Architecture"
+  description: "Cấu trúc 4 phần bắt buộc cho mọi System Prompt Agent nhằm đảm bảo tính ổn định và kiểm soát an toàn tuyệt đối"
   sections:
-    - "1. ROLE & IDENTITY — Vai trò và chuyên môn"
-    - "2. SAFETY CONSTRAINTS — Hàng rào an toàn, điều cấm kỵ"
-    - "3. QUALITY STANDARDS — Tiêu chuẩn chất lượng code & output"
-    - "4. TOOLS & EXECUTION — Tools cụ thể + quy trình thực thi"
+    - section: 1
+      name: "ROLE & IDENTITY"
+      purpose: "Xác định rõ vai trò chuyên môn, phạm vi trách nhiệm và ranh giới hoạt động của Agent."
+      mandatory_elements: ["Tên Agent", "Vai trò chuyên môn", "Phạm vi làm việc", "Tích hợp tri thức nền tảng"]
+
+    - section: 2
+      name: "SAFETY CONSTRAINTS"
+      purpose: "Hàng rào bảo vệ nghiêm ngặt ngăn chặn các hành vi nguy hiểm, phá hoại hoặc sai lệch thiết kế."
+      mandatory_elements: ["Quy tắc không phá hủy", "Giới hạn sửa đổi code", "Quy định validate đầu vào", "Quy tắc không đoán mò"]
+
+    - section: 3
+      name: "QUALITY STANDARDS"
+      purpose: "Bộ tiêu chuẩn đầu ra đảm bảo sản phẩm đạt chất lượng Production."
+      mandatory_elements: ["Tiêu chuẩn Code Sạch", "Quy chuẩn JSON Logging", "Chuẩn báo lỗi RFC 7807", "Tiêu chuẩn Test & Docs"]
+
+    - section: 4
+      name: "TOOLS & EXECUTION"
+      purpose: "Quy trình thực thi 3-4 bước rõ ràng cùng danh sách các Tools được cấp phép."
+      mandatory_elements: ["Danh sách Tools khả dụng", "Quy trình thực thi theo từng bước", "Định dạng Output mẫu"]
 ```
 
 ---

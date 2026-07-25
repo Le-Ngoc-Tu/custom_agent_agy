@@ -26,7 +26,7 @@
 
 - [项目概述](#项目概述)
 - [自动 Agent 选择与动态 Spawn 机制](#自动-agent-选择与动态-spawn-机制)
-- [核心设计哲学](#核心设计哲学)
+- [详细设计哲学 DSL](#详细设计哲学-dsl)
 - [8 大 Agent 目录](#8-大-agent-目录)
 - [8 阶段流水线架构](#8-阶段流水线架构)
 - [一键全局安装](#一键全局安装)
@@ -43,12 +43,6 @@
 ## 项目概述
 
 **Custom Agent AGY** 是专为 [Antigravity CLI](https://antigravity.dev) (v1.1.6+) 及支持 Subagent 机制的 AI 编码助手量身定制的**生产级 Custom System Prompts** 集合。
-
-**适用人群：**
-- 追求企业级工程标准的独立开发者 (Solo Developer)
-- 寻求标准化团队开发工作流的技术 Leader
-- 借助 AI 进行需求工程与文档撰写的业务分析师 (BA)
-- 希望通过多 Agent 协作提升生产力的软件工程师
 
 ---
 
@@ -68,59 +62,89 @@ flowchart TD
     AutoSelect --> Spawn5["... 按流水线依次启动后续 Agent"]
 ```
 
-### 核心亮点：
-
-1. **自动选择 Agent：** 无需手动切换。主控 Agent 自动解析 YAML frontmatter (`name` 与 `description`) 匹配最佳 Agent。
-2. **动态 Subagent 调度：** 自动调用 `invoke_subagent` 实现并行（如架构设计与测试用例同时进行）或串行调度。
-3. **手动切换支持：** 随时可在 CLI 中输入 `/agents` 调出 TUI 面板进行手动切换。
-
 ---
 
-## 核心设计哲学
+## 详细设计哲学 DSL
 
-所有 Agent 遵循 5 大核心原则，并以 DSL 格式编码供 Agent 解析：
+所有 8 个 Agent 均构建于 5 大核心工程原则及 **4-Part Harness 架构**之上，并编码为机器可读的 DSL：
 
 ```yaml
 # design_philosophy.dsl
+version: "2.0.0"
+description: "AI Agent 与软件工程师的架构设计原则"
+
 principles:
   - id: P1
-    name: "选择高于努力"
-    rule: "优先使用工业级标准库 (pino, Zod, Prisma)，切勿重复造轮子"
-    example: "使用 bcrypt/argon2 进行密码哈希，不自定义加密算法"
+    name: "继承工业级标准 (Standardization over Reinvention)"
+    rationale: "对于已有业界成熟解决方案的问题，绝不重新造轮子。"
+    rule: "100% 优先使用工业级标准库 (如 pino, Zod, Prisma, Argon2, Redis)。切勿自定义加密算法、验证器或日志库。"
+    boundary: "仅在当下无任何靠谱开源库满足要求时，才编写自定义代码。"
+    good_example: "使用 Argon2id 进行密码哈希，使用 Zod 进行 Schema 校验，使用 Pino 进行结构化日志输出。"
+    bad_example: "手写 SHA256 + Salt 密码哈希函数，或编写复杂的自定义正则表达式校验 Email。"
 
   - id: P2
-    name: "简约高于复杂"
-    rule: "早返回、单一职责，拒绝过早抽象"
-    example: "仅在当下重复使用 >= 3 次时才抽取 Helper 函数"
+    name: "简约设计与拒绝过早抽象 (Simplicity & YAGNI)"
+    rationale: "非必要的代码即是技术债务，更是 Bug 的温床。"
+    rule: "严格践行 YAGNI & KISS 原则。代码保持扁平 (Flat Code)，优先早返回 (Early Returns) 与单一职责。"
+    boundary: "除非当下已有至少 3 处实际调用，否则严禁抽取抽象类、接口或通用 Helper 工具。"
+    good_example: |
+      if (!user) return res.status(404).json({ error: "USER_NOT_FOUND" });
+      if (!user.isActive) return res.status(403).json({ error: "USER_INACTIVE" });
+    bad_example: "仅为执行一条简单的 SELECT 查询就创建 GenericAbstractBaseUserRepositoryFactoryImpl。"
 
   - id: P3
-    name: "可量化的性能"
-    rule: "仅在测量出瓶颈处进行针对性优化"
-    example: "在 EXPLAIN 分析确认全表扫描后才添加数据库索引"
+    name: "基于经验数据的性能优化 (Data-Driven Optimization)"
+    rationale: "缺乏数据支撑凭直觉优化只会增加代码复杂度，无法带来实际价值。"
+    rule: "仅在 Profiler、指标监控或数据库 EXPLAIN 执行计划提供确凿证据时才进行性能优化。"
+    boundary: "任何关于添加数据库索引、Redis 缓存或 Worker 线程的提议，必须附带优化前后的 Benchmark 对比。"
+    good_example: "运行 EXPLAIN ANALYZE 发现全表扫描 -> 添加复合索引 (user_id, status)。"
+    bad_example: "即便数据表只有 50 行静态数据，也强制给所有查询套上 Redis 缓存。"
 
   - id: P4
-    name: "贯穿开发至生产的可观测性"
-    rule: "从第一天起配置结构化日志、Correlation ID 与错误追踪"
-    example: "每个 Request Handler 必须端到端传递 requestId"
+    name: "贯穿开发至生产的全流程可观测性 (Dev-to-Prod Observability)"
+    rationale: "不可观测的系统无法在生产环境中稳定运行。"
+    rule: "功能只有从第一行代码起内置结构化日志、Correlation ID 与错误追踪，才被视为完成 (Done)。"
+    boundary: "所有 HTTP 请求、Cron Job 或消息队列必须端到端传递并继承 Correlation ID (requestId/traceId)。"
+    good_example: "网关/中间件生成 X-Request-ID Header，并自动附加到该请求的每一行日志中。"
+    bad_example: "在 Controller 捕捉到了异常并打印日志，却没有 Trace ID 用于追溯原始请求上下文。"
 
   - id: P5
-    name: "每一行日志必须具备实际意义"
-    rule: "JSON 结构化日志，明确回答：发生了什么？涉及谁？结果如何？"
-    example: |
+    name: "每一行日志具备丰富上下文 (Context-Rich Structured Logging)"
+    rule: "所有日志输出必须为 JSON 结构化格式，包含丰富上下文，便于机器与人工精准查询过滤。"
+    boundary: "禁止使用 console.log('here')、console.log(err) 或无结构文本。每行日志必须回答：发生了什么？何时？涉及谁？结果如何？"
+    good_example: |
       logger.info({
-        event: "order.created",
-        orderId: "ord_123",
-        userId: "usr_456",
-        duration: 145
+        timestamp: "2026-07-25T16:20:00.000Z",
+        level: "info",
+        traceId: "req_xyz789",
+        event: "order.payment_processed",
+        metadata: { orderId: "ord_123", userId: "usr_456", amount: 500000, durationMs: 142 }
       })
+    bad_example: "console.log('Payment success for order ' + orderId);"
 
 agent_structure:
-  format: "4-part harness"
+  format: "4-Part Harness 架构"
+  description: "每个 Agent System Prompt 的强制 4 部分结构，确保稳定性与安全防线"
   sections:
-    - "1. ROLE & IDENTITY — 明确角色定位与专业边界"
-    - "2. SAFETY CONSTRAINTS — 明确安全防线与禁忌行为"
-    - "3. QUALITY STANDARDS — 代码与交付物质量标准"
-    - "4. TOOLS & EXECUTION — 具体工具链与 3-4 步执行流程"
+    - section: 1
+      name: "ROLE & IDENTITY"
+      purpose: "明确专业角色、领域边界与核心身份。"
+      mandatory_elements: ["Agent 名称", "专业领域", "工作范围", "内置基础知识"]
+
+    - section: 2
+      name: "SAFETY CONSTRAINTS"
+      purpose: "严格防线，防止破坏性或越界行为。"
+      mandatory_elements: ["非破坏性规则", "代码修改边界", "输入校验要求", "禁止瞎猜规则"]
+
+    - section: 3
+      name: "QUALITY STANDARDS"
+      purpose: "输出标准，确保交付生产级质量。"
+      mandatory_elements: ["Clean Code 标准", "JSON 日志标准", "RFC 7807 错误格式", "测试与文档标准"]
+
+    - section: 4
+      name: "TOOLS & EXECUTION"
+      purpose: "清晰的 3-4 步执行工作流与工具权限。"
+      mandatory_elements: ["可用工具列表", "分步执行工作流", "输出格式模板"]
 ```
 
 ---
@@ -253,8 +277,6 @@ bash scripts/setup_global.sh
 ```bash
 /agents
 ```
-
-在 **Available Agents** 列表中选择所需 Agent 即可开启专属对话。
 
 ---
 

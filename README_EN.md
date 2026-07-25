@@ -26,7 +26,7 @@
 
 - [Overview](#overview)
 - [Auto Agent Selection & Dynamic Spawning](#auto-agent-selection--dynamic-spawning)
-- [Design Philosophy](#design-philosophy)
+- [Detailed Design Philosophy DSL](#detailed-design-philosophy-dsl)
 - [8 Agents Catalog](#8-agents-catalog)
 - [8-Stage Pipeline Architecture](#8-stage-pipeline-architecture)
 - [Automated 1-Click Global Installation](#automated-1-click-global-installation)
@@ -43,12 +43,6 @@
 ## Overview
 
 **Custom Agent AGY** is a production-grade collection of **Custom System Prompts** designed for [Antigravity CLI](https://antigravity.dev) (v1.1.6+) and compatible AI coding assistants supporting subagents and custom agent definitions.
-
-**Target Audience:**
-- Solo developers aiming for enterprise-grade engineering standards
-- Engineering leads standardizing team workflows
-- Business Analysts leveraging AI for requirements engineering & documentation
-- Software developers optimizing productivity through multi-agent orchestration
 
 ---
 
@@ -68,59 +62,89 @@ flowchart TD
     AutoSelect --> Spawn5["... Spawn remaining pipeline agents"]
 ```
 
-### Key Highlights:
-
-1. **Automatic Selection:** No need to manually pick agents for complex tasks. The Orchestrator automatically parses the YAML frontmatter (`name` and `description`) to select the ideal agent for each task.
-2. **Dynamic Subagent Spawning:** The Orchestrator automatically invokes `invoke_subagent` to spawn agents in parallel (e.g., Architect + QC Test) or sequentially across the 8-stage pipeline.
-3. **Manual Selection (Optional):** You can still open `/agents` in the TUI at any time to switch agents manually.
-
 ---
 
-## Design Philosophy
+## Detailed Design Philosophy DSL
 
-All agents adhere to 5 core principles encoded as a machine-readable DSL:
+All 8 agents are constructed based on 5 core engineering principles and a **4-Part Harness Architecture**, encoded as a Machine-Readable DSL:
 
 ```yaml
 # design_philosophy.dsl
+version: "2.0.0"
+description: "Architectural design principles for AI Agents and Software Engineers"
+
 principles:
   - id: P1
-    name: "Choice over effort"
-    rule: "Use industry-standard libraries (pino, Zod, Prisma); DO NOT reinvent the wheel"
-    example: "Use bcrypt/argon2 for password hashing instead of custom cryptography"
+    name: "Standardization over Reinvention"
+    rationale: "Never rewrite problems that already have trusted, community-battle-tested solutions."
+    rule: "Prioritize 100% usage of industry-standard libraries (pino, Zod, Prisma, Argon2, Redis). DO NOT invent custom cryptography, validators, or loggers."
+    boundary: "Write custom code ONLY when no reputable open-source library exists to meet the requirement."
+    good_example: "Use Argon2id for password hashing, Zod for schema validation, Pino for structured logging."
+    bad_example: "Writing a custom SHA256 + salt password hashing function or complex custom regex for email validation."
 
   - id: P2
-    name: "Simplicity over complexity"
-    rule: "Early returns, single responsibility, no premature abstractions"
-    example: "Only extract helper utilities when reused >= 3 times NOW"
+    name: "Simplicity and YAGNI over Premature Abstraction"
+    rationale: "Unnecessary code is technical debt and a breeding ground for bugs."
+    rule: "Strictly enforce YAGNI & KISS principles. Write flat code, prioritizing early returns and single responsibility."
+    boundary: "DO NOT extract abstract classes, interfaces, or helper utilities unless reused in >= 3 places RIGHT NOW."
+    good_example: |
+      if (!user) return res.status(404).json({ error: "USER_NOT_FOUND" });
+      if (!user.isActive) return res.status(403).json({ error: "USER_INACTIVE" });
+    bad_example: "Creating a GenericAbstractBaseUserRepositoryFactoryImpl just to execute a simple SELECT query."
 
   - id: P3
-    name: "Measured performance"
-    rule: "Optimize strictly where bottlenecks are measured; avoid premature optimization"
-    example: "Add database indexes AFTER EXPLAIN queries reveal full table scans"
+    name: "Data-Driven Performance Optimization"
+    rationale: "Intuitive optimization without measurement adds complexity without delivering value."
+    rule: "Optimize performance strictly when backed by empirical evidence from profilers, metrics, or Database EXPLAIN Plans."
+    boundary: "Every proposal for a Database Index, Redis Cache, or Worker Thread must include before/after benchmarks."
+    good_example: "Running EXPLAIN ANALYZE identifies a Full Table Scan -> Add a Composite Index (user_id, status)."
+    bad_example: "Wrapping every query in Redis Cache even when the table contains only 50 rows of static data."
 
   - id: P4
-    name: "Dev-to-Production Observability"
-    rule: "Structured logging, correlation IDs, and error tracking from day one"
-    example: "Every request handler must propagate requestId end-to-end"
+    name: "Dev-to-Production End-to-End Observability"
+    rationale: "An unobservable system cannot be operated reliably in production."
+    rule: "A feature is Done ONLY when Structured Logging, Correlation IDs, and Error Tracking are built-in from line one."
+    boundary: "Every HTTP Request, Cron Job, or Message Queue must propagate a Correlation ID (requestId/traceId) end-to-end."
+    good_example: "Header X-Request-ID is generated at the Gateway/Middleware and attached to every log entry for that request."
+    bad_example: "Catching an error in a controller and logging it without a Trace ID to track upstream origin."
 
   - id: P5
-    name: "Meaningful log entries"
-    rule: "JSON structured logs answering: What happened? To whom? What result?"
-    example: |
+    name: "Context-Rich Structured Logging"
+    rule: "All log outputs must be JSON Structured, containing rich context so both machines and humans can filter accurately."
+    boundary: "DO NOT use console.log('here'), console.log(err), or unstructured text. Every log entry must answer: What happened? When? To whom? What result?"
+    good_example: |
       logger.info({
-        event: "order.created",
-        orderId: "ord_123",
-        userId: "usr_456",
-        duration: 145
+        timestamp: "2026-07-25T16:20:00.000Z",
+        level: "info",
+        traceId: "req_xyz789",
+        event: "order.payment_processed",
+        metadata: { orderId: "ord_123", userId: "usr_456", amount: 500000, durationMs: 142 }
       })
+    bad_example: "console.log('Payment success for order ' + orderId);"
 
 agent_structure:
-  format: "4-part harness"
+  format: "4-Part Harness Architecture"
+  description: "Mandatory 4-part structure for every Agent System Prompt to ensure stability and safety guardrails"
   sections:
-    - "1. ROLE & IDENTITY — Clear specialization and domain boundary"
-    - "2. SAFETY CONSTRAINTS — Explicit guardrails and forbidden actions"
-    - "3. QUALITY STANDARDS — Code & deliverable quality criteria"
-    - "4. TOOLS & EXECUTION — Exact tools and 3-4 step execution workflow"
+    - section: 1
+      name: "ROLE & IDENTITY"
+      purpose: "Defines specialized role, domain boundaries, and core identity."
+      mandatory_elements: ["Agent Name", "Domain Specialization", "Scope of Work", "Integrated Knowledge"]
+
+    - section: 2
+      name: "SAFETY CONSTRAINTS"
+      purpose: "Strict guardrails preventing destructive or out-of-scope behavior."
+      mandatory_elements: ["Non-destructive rules", "Code modification boundaries", "Input validation requirements", "No-guessing rules"]
+
+    - section: 3
+      name: "QUALITY STANDARDS"
+      purpose: "Output criteria ensuring production-grade deliverables."
+      mandatory_elements: ["Clean Code standards", "JSON Logging standards", "RFC 7807 Error format", "Testing & Docs standards"]
+
+    - section: 4
+      name: "TOOLS & EXECUTION"
+      purpose: "Clear 3-4 step execution workflow and allowed tool permissions."
+      mandatory_elements: ["Allowed Tool List", "Step-by-step Execution Workflow", "Output Format Template"]
 ```
 
 ---
