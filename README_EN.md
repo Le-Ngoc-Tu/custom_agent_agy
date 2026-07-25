@@ -25,10 +25,11 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Auto Agent Selection & Dynamic Spawning](#auto-agent-selection--dynamic-spawning)
 - [Design Philosophy](#design-philosophy)
 - [8 Agents Catalog](#8-agents-catalog)
 - [8-Stage Pipeline Architecture](#8-stage-pipeline-architecture)
-- [Installation & Global Setup](#installation--global-setup)
+- [Automated 1-Click Global Installation](#automated-1-click-global-installation)
 - [How to Select Agents (`/agents` Panel)](#how-to-select-agents-agents-panel)
 - [Usage Examples](#usage-examples)
 - [Tips & Tricks: How BAs Use AI to Draw Flow Diagrams](#tips--tricks-how-bas-use-ai-to-draw-flow-diagrams)
@@ -49,32 +50,29 @@
 - Business Analysts leveraging AI for requirements engineering & documentation
 - Software developers optimizing productivity through multi-agent orchestration
 
-**Integrated Knowledge Base:**
+---
+
+## Auto Agent Selection & Dynamic Spawning
+
+In **Antigravity CLI (v1.1.6+)**, once custom agents are installed in your global config (`~/.gemini/config/agents/`), Antigravity operates using **Orchestrator Dynamic Spawning**:
 
 ```mermaid
-mindmap
-  root((Custom Agent AGY))
-    BA & QC Guidelines
-      IEEE 29148 SRS
-      ISTQB Test Design
-      Gherkin AC Format
-      BPMN 2.0 Modeling
-    API Best Practices
-      REST API Standards
-      GraphQL & gRPC
-      WebSocket & Webhooks
-      MCP Protocol
-    Production Standards
-      Structured Logging JSON
-      Error Tracking RFC 7807
-      CI/CD GitHub Actions
-      Conventional Commits
-    Agent Templates
-      Auth & Security
-      Bug Fixing
-      Database Design
-      Codebase Analysis
+flowchart TD
+    UserReq["👤 User Prompt: 'Build feature X'"] --> Orch["🤖 Primary Agent (Orchestrator)"]
+    Orch -->|Reads YAML metadata| Scan["🔍 Scans Global Agents\n~/.gemini/config/agents/"]
+    Scan --> AutoSelect["⚡ Automatically selects matching agents\nbased on roles and tasks"]
+    AutoSelect --> Spawn1["① Spawn ba-requirements-specialist"]
+    AutoSelect --> Spawn2["② Spawn api-db-architect (parallel)"]
+    AutoSelect --> Spawn3["③ Spawn qc-verification-specialist (parallel)"]
+    AutoSelect --> Spawn4["⑤ Spawn dev-security-implementer"]
+    AutoSelect --> Spawn5["... Spawn remaining pipeline agents"]
 ```
+
+### Key Highlights:
+
+1. **Automatic Selection:** No need to manually pick agents for complex tasks. The Orchestrator automatically parses the YAML frontmatter (`name` and `description`) to select the ideal agent for each task.
+2. **Dynamic Subagent Spawning:** The Orchestrator automatically invokes `invoke_subagent` to spawn agents in parallel (e.g., Architect + QC Test) or sequentially across the 8-stage pipeline.
+3. **Manual Selection (Optional):** You can still open `/agents` in the TUI at any time to switch agents manually.
 
 ---
 
@@ -157,43 +155,6 @@ block-beta
 
 ## 8-Stage Pipeline Architecture
 
-### High-Level Stage Flow
-
-```mermaid
-flowchart LR
-    subgraph "Phase 1: Discovery"
-        S1["① BA\nRequirements"]
-    end
-
-    subgraph "Phase 2: Architecture & QA (Parallel)"
-        S2["② API & DB\nArchitect"]
-        S3["③ QC Test\nStrategy"]
-    end
-
-    subgraph "Phase 3: Reconnaissance"
-        S4["④ Codebase\nResearcher"]
-    end
-
-    subgraph "Phase 4: Implementation"
-        S5["⑤ Developer\n& Security"]
-    end
-
-    subgraph "Phase 5: Refinement (Parallel)"
-        S6["⑥ Logging\nSetup"]
-        S7["⑦ Docs &\nREADME"]
-    end
-
-    subgraph "Phase 6: Delivery"
-        S8["⑧ DevOps\nGit & CI/CD"]
-    end
-
-    S1 --> S2 & S3
-    S2 & S3 --> S4
-    S4 --> S5
-    S5 --> S6 & S7
-    S6 & S7 --> S8
-```
-
 ### Detailed Sequence Diagram
 
 ```mermaid
@@ -267,45 +228,20 @@ sequenceDiagram
 
 ---
 
-## Installation & Global Setup
+## Automated 1-Click Global Installation
 
-### Automatic Global Installation
+After cloning the repository, install all 8 agents into your global Antigravity config directory (`~/.gemini/config/agents/`) with **a single command**:
 
-To make all 8 agents globally available across **all projects and workspaces** in Antigravity CLI, copy the agent definition folders into your global Antigravity config directory:
-
-```bash
-# Global Agents Directory (Windows)
-%USERPROFILE%\.gemini\config\agents\
-
-# Global Agents Directory (Linux/macOS)
-~/.gemini/config/agents/
-```
-
-**Directory Structure:**
-
-```
-~/.gemini/config/agents/
-├── ba-requirements-specialist/agent.md
-├── api-db-architect/agent.md
-├── qc-verification-specialist/agent.md
-├── codebase-researcher/agent.md
-├── dev-security-implementer/agent.md
-├── logging-observability-specialist/agent.md
-├── docs-readme-specialist/agent.md
-└── devops-git-specialist/agent.md
-```
-
-### Quick One-Line Setup Command
-
-**PowerShell (Windows):**
+### On Windows (PowerShell):
 
 ```powershell
-$src = "path\to\custom_agent_agy"
-$dest = "$env:USERPROFILE\.gemini\config\agents"
-@("ba-requirements-specialist","api-db-architect","qc-verification-specialist","codebase-researcher","dev-security-implementer","logging-observability-specialist","docs-readme-specialist","devops-git-specialist") | ForEach-Object {
-    New-Item -ItemType Directory -Path "$dest\$_" -Force | Out-Null
-    Copy-Item "$src\$_.md" "$dest\$_\agent.md" -Force
-}
+.\scripts\setup_global.ps1
+```
+
+### On Linux / macOS (Bash):
+
+```bash
+bash scripts/setup_global.sh
 ```
 
 ---
@@ -341,57 +277,6 @@ Antigravity CLI provides an interactive TUI panel to switch between custom agent
 
 ---
 
-## Usage Examples
-
-### End-to-End Orchestration
-
-In an Antigravity session, prompt:
-
-```
-Execute the 8-stage pipeline using custom agents to build:
-"A user authentication system supporting JWT access/refresh tokens, RBAC roles, and email password reset"
-```
-
----
-
-## Tips & Tricks: How BAs Use AI to Draw Flow Diagrams
-
-> **Practical Insight:** Beyond writing code, these agents empower Business Analysts to generate technical & business diagrams effortlessly.
-
-### The BA Dilemma
-
-BAs often bridge two distinct worlds:
-- **Dev Team:** Needs endpoints, payloads, status codes, and database schemas.
-- **Business Stakeholders:** Need simple business process flows ("How does data move from System A to System B?").
-
-### Dual-Output Strategy
-
-By instructing the BA Agent, you obtain both outputs in one go:
-
-```mermaid
-sequenceDiagram
-    actor Customer as 👤 Customer
-    participant FE as 🖥️ Frontend
-    participant MW as ⚙️ Middleware API
-    participant CB as 🏦 Credit Bureau API
-    participant UW as 📊 Underwriting Engine
-
-    Customer->>FE: Submit loan application
-    FE->>MW: POST /api/v1/loans/apply
-    MW->>CB: GET /credit-score?ssn=***
-    CB-->>MW: 200 OK { score: 720 }
-    MW->>UW: POST /underwrite { loan + creditScore }
-    UW-->>MW: 200 OK { decision: "APPROVED", limit: 50000 }
-    MW-->>FE: 201 Created { status: "approved" }
-    FE-->>Customer: ✅ Application Approved!
-```
-
-**Business Summary for Stakeholders:**
-
-> When a customer submits a loan application, the system automatically checks their credit score via the Credit Bureau API. Once retrieved, the complete profile is evaluated by the automated Underwriting Engine, displaying the approval decision instantly.
-
----
-
 ## Project Structure
 
 ```
@@ -402,6 +287,9 @@ custom_agent_agy/
 ├── full_lifecycle_workflow_guide.md        # 8-stage workflow guide
 ├── assets/
 │   └── banner.jpg                         # Repository banner image
+├── scripts/
+│   ├── setup_global.ps1                   # 1-Click setup script for Windows
+│   └── setup_global.sh                    # 1-Click setup script for Linux/macOS
 ├── docs/
 │   ├── USAGE_GUIDE.md                     # Per-agent usage guide
 │   └── TIPS_BA_AI_FLOW.md                 # BA AI flow diagrams guide

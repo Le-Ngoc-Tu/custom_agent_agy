@@ -25,10 +25,11 @@
 ## Mục Lục
 
 - [Giới Thiệu](#giới-thiệu)
+- [Cơ Chế Tự Động Chọn Agent & Spawn Subagents](#cơ-chế-tự-động-chọn-agent--spawn-subagents)
 - [Triết Lý Thiết Kế](#triết-lý-thiết-kế)
 - [Danh Sách 8 Agents](#danh-sách-8-agents)
 - [Kiến Trúc Pipeline 8 Giai Đoạn](#kiến-trúc-pipeline-8-giai-đoạn)
-- [Cài Đặt Global (`~/.gemini/config/agents/`)](#cài-đặt-global--geminiconfigagents)
+- [Cài Đặt Tự Động 1-Click Global](#cài-đặt-tự-động-1-click-global)
 - [Cách Mở Bảng Điều Khiển (`/agents`)](#cách-mở-bảng-điều-khiển-agents)
 - [Ví Dụ Thực Tế](#ví-dụ-thực-tế)
 - [Tips & Tricks: BA Dùng AI Vẽ Flow Diagrams](#tips--tricks-ba-dùng-ai-vẽ-flow-diagrams)
@@ -49,32 +50,29 @@
 - Business Analysts muốn tận dụng AI cho requirement analysis & documentation
 - Bất kỳ ai muốn tối ưu năng suất phát triển phần mềm với AI agents
 
-**Tri thức tích hợp từ:**
+---
+
+## Cơ Chế Tự Động Chọn Agent & Spawn Subagents
+
+Trong phiên bản mới nhất của **Antigravity CLI (v1.1.6+)**, khi các custom agents đã được cài đặt vào hệ thống Global (`~/.gemini/config/agents/`), Antigravity sẽ tự động hoạt động theo cơ chế **Orchestrator Dynamic Spawning**:
 
 ```mermaid
-mindmap
-  root((Custom Agent AGY))
-    BA & QC Guidelines
-      IEEE 29148 SRS
-      ISTQB Test Design
-      Gherkin AC Format
-      BPMN 2.0 Modeling
-    API Best Practices
-      REST API Standards
-      GraphQL & gRPC
-      WebSocket & Webhooks
-      MCP Protocol
-    Production Standards
-      Structured Logging JSON
-      Error Tracking RFC 7807
-      CI/CD GitHub Actions
-      Conventional Commits
-    Agent Templates
-      Auth & Security
-      Bug Fixing
-      Database Design
-      Codebase Analysis
+flowchart TD
+    UserReq["👤 Người dùng: 'Xây dựng tính năng X'"] --> Orch["🤖 Primary Agent (Orchestrator)"]
+    Orch -->|Đọc metadata YAML frontmatter| Scan["🔍 Quét danh sách Global Agents\n~/.gemini/config/agents/"]
+    Scan --> AutoSelect["⚡ Tự động chọn Agent phù hợp\ntheo vai trò và nhiệm vụ"]
+    AutoSelect --> Spawn1["① Spawn ba-requirements-specialist"]
+    AutoSelect --> Spawn2["② Spawn api-db-architect (song song)"]
+    AutoSelect --> Spawn3["③ Spawn qc-verification-specialist (song song)"]
+    AutoSelect --> Spawn4["⑤ Spawn dev-security-implementer"]
+    AutoSelect --> Spawn5["... Spawn các agents còn lại theo pipeline"]
 ```
+
+### Điểm nổi bật:
+
+1. **Auto Agent Selection:** Bạn không cần phải chọn thủ công từng agent. Orchestrator Agent sẽ tự động đọc `name` và `description` trong YAML frontmatter để chọn đúng agent cho từng công việc.
+2. **Dynamic Subagent Spawning:** Orchestrator tự động gọi `invoke_subagent` để spawn các subagents chạy song song (ví dụ: Architect + QC Test) hoặc chạy tuần tự theo quy trình pipeline 8 giai đoạn.
+3. **Chuyển đổi thủ công (Nếu muốn):** Bạn vẫn có thể gõ `/agents` trong TUI để chủ động switch sang một agent cụ thể bất kỳ lúc nào.
 
 ---
 
@@ -267,18 +265,20 @@ sequenceDiagram
 
 ---
 
-## Cài Đặt Global (`~/.gemini/config/agents/`)
+## Cài Đặt Tự Động 1-Click Global
 
-Theo tài liệu chính thức của **Antigravity CLI**, để 8 custom agents có sẵn ở **tất cả thư mục / dự án**, đặt chúng vào thư mục cấu hình global:
+Sau khi clone repo về máy, bạn chỉ cần chạy **1 lệnh duy nhất** để cài đặt toàn bộ 8 agents vào hệ thống Global Config của Antigravity CLI (`~/.gemini/config/agents/`):
 
-- **Windows:** `%USERPROFILE%\.gemini\config\agents\{agent_name}\agent.md`
-- **Linux/macOS:** `~/.gemini/config/agents/{agent_name}/agent.md`
-
-### Lệnh cài đặt nhanh 1 dòng (PowerShell)
+### Trên Windows (PowerShell):
 
 ```powershell
-$src = "path\to\custom_agent_agy"; $dest = "$env:USERPROFILE\.gemini\config\agents"
-@("ba-requirements-specialist","api-db-architect","qc-verification-specialist","codebase-researcher","dev-security-implementer","logging-observability-specialist","docs-readme-specialist","devops-git-specialist") | ForEach-Object { New-Item -ItemType Directory -Path "$dest\$_" -Force | Out-Null; Copy-Item "$src\$_.md" "$dest\$_\agent.md" -Force }
+.\scripts\setup_global.ps1
+```
+
+### Trên Linux / macOS (Bash):
+
+```bash
+bash scripts/setup_global.sh
 ```
 
 ---
@@ -376,8 +376,6 @@ sequenceDiagram
     FE-->>Customer: Hiển thị kết quả: Đơn vay được duyệt ✅
 ```
 
-> **Tóm tắt nghiệp vụ cho Stakeholders:** "Khi khách hàng nộp đơn xin vay, hệ thống tự động kiểm tra điểm tín dụng qua API của Trung tâm Thông tin Tín dụng. Sau đó, toàn bộ hồ sơ được gửi sang hệ thống Thẩm định tự động để ra quyết định phê duyệt."
-
 ---
 
 ## Cấu Trúc Thư Mục
@@ -390,6 +388,9 @@ custom_agent_agy/
 ├── full_lifecycle_workflow_guide.md        # Hướng dẫn điều phối 8 giai đoạn
 ├── assets/
 │   └── banner.jpg                         # Banner image cho README
+├── scripts/
+│   ├── setup_global.ps1                   # 1-Click setup script cho Windows
+│   └── setup_global.sh                    # 1-Click setup script cho Linux/macOS
 ├── docs/
 │   ├── USAGE_GUIDE.md                     # Hướng dẫn sử dụng chi tiết
 │   └── TIPS_BA_AI_FLOW.md                 # Tips BA dùng AI vẽ Flow Diagrams
