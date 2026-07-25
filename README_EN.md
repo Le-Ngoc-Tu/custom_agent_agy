@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="README.md"><strong>🇻🇳 Tiếng Việt</strong></a> | <a href="README_EN.md"><strong>🇺🇸 English</strong></a>
+  <a href="README.md"><strong>🇻🇳 Tiếng Việt</strong></a> | <a href="README_EN.md"><strong>🇺🇸 English</strong></a> | <a href="README_ZH.md"><strong>🇨🇳 简体中文</strong></a>
 </p>
 
 <p align="center">
@@ -258,23 +258,6 @@ Antigravity CLI provides an interactive TUI panel to switch between custom agent
 3. Select any of the 8 custom agents and press `Enter`.
 4. Press `Esc` to close the panel and apply your selection.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                       AGENTS MANAGER                        │
-├─────────────────────────────────────────────────────────────┤
-│ Available Agents                                            │
-│   ● Default Agent                                           │
-│     ba-requirements-specialist                              │
-│     api-db-architect                                        │
-│     qc-verification-specialist                              │
-│     codebase-researcher                                     │
-│     dev-security-implementer                                │
-│     logging-observability-specialist                        │
-│     docs-readme-specialist                                  │
-│     devops-git-specialist                                   │
-└─────────────────────────────────────────────────────────────┘
-```
-
 ---
 
 ## Project Structure
@@ -283,6 +266,7 @@ Antigravity CLI provides an interactive TUI panel to switch between custom agent
 custom_agent_agy/
 ├── README.md                              # Main Vietnamese README
 ├── README_EN.md                           # Main English README
+├── README_ZH.md                           # Main Chinese README
 ├── .gitignore                             # 2-Layer Git ignore
 ├── full_lifecycle_workflow_guide.md        # 8-stage workflow guide
 ├── assets/
@@ -311,6 +295,8 @@ custom_agent_agy/
 
 | Document | Description |
 |----------|-------------|
+| [Chinese Version](README_ZH.md) | Custom Agent AGY 简体中文完整文档 |
+| [Vietnamese Version](README.md) | Custom Agent AGY 越南语完整文档 |
 | [Workflow Guide](full_lifecycle_workflow_guide.md) | Full 8-stage orchestration guide and parallel execution rules |
 | [Usage Guide](docs/USAGE_GUIDE.md) | In-depth reference for each agent: goals, triggers, prompts & outputs |
 | [BA AI Flow Tips](docs/TIPS_BA_AI_FLOW.md) | Guide for BAs using AI for API flow diagrams & BRD documents |

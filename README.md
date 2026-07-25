@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="README.md"><strong>🇻🇳 Tiếng Việt</strong></a> | <a href="README_EN.md"><strong>🇺🇸 English</strong></a>
+  <a href="README.md"><strong>🇻🇳 Tiếng Việt</strong></a> | <a href="README_EN.md"><strong>🇺🇸 English</strong></a> | <a href="README_ZH.md"><strong>🇨🇳 简体中文</strong></a>
 </p>
 
 <p align="center">
@@ -384,6 +384,7 @@ sequenceDiagram
 custom_agent_agy/
 ├── README.md                              # Tài liệu chính (Tiếng Việt)
 ├── README_EN.md                           # Main English README
+├── README_ZH.md                           # 简体中文 README
 ├── .gitignore                             # Git ignore rules
 ├── full_lifecycle_workflow_guide.md        # Hướng dẫn điều phối 8 giai đoạn
 ├── assets/
@@ -413,6 +414,7 @@ custom_agent_agy/
 | Tài liệu | Mô tả |
 |-----------|--------|
 | [English Version](README_EN.md) | Full English documentation of Custom Agent AGY |
+| [Chinese Version](README_ZH.md) | Custom Agent AGY 简体中文完整文档 |
 | [Workflow Guide](full_lifecycle_workflow_guide.md) | Hướng dẫn điều phối đầy đủ 8 giai đoạn + Parallel Execution Map |
 | [Usage Guide](docs/USAGE_GUIDE.md) | Hướng dẫn chi tiết từng agent: mô tả, prompt mẫu, output mẫu |
 | [BA AI Flow Tips](docs/TIPS_BA_AI_FLOW.md) | Mẹo BA dùng AI vẽ Flow Diagrams + tạo tài liệu chuyên nghiệp |
