@@ -1,0 +1,39 @@
+name: CI / Lint & Verification
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-agents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Agent Markdown Files Structure
+        run: |
+          echo "Validating 8 Custom Agent Prompts..."
+          agents=(
+            "ba-requirements-specialist.md"
+            "api-db-architect.md"
+            "qc-verification-specialist.md"
+            "codebase-researcher.md"
+            "dev-security-implementer.md"
+            "logging-observability-specialist.md"
+            "docs-readme-specialist.md"
+            "devops-git-specialist.md"
+          )
+          for agent in "${agents[@]}"; do
+            if [ ! -f "$agent" ]; then
+              echo "Error: Missing $agent"
+              exit 1
+            fi
+            echo "OK: $agent exists."
+          done
+
+      - name: Check Shell Script Syntax
+        run: |
+          bash -n scripts/setup_global.sh
+          echo "Shell script syntax check passed."
