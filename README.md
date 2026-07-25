@@ -9,6 +9,10 @@
 </p>
 
 <p align="center">
+  <a href="README.md"><strong>🇻🇳 Tiếng Việt</strong></a> | <a href="README_EN.md"><strong>🇺🇸 English</strong></a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/agents-8-blue?style=for-the-badge" alt="Agents"/>
   <img src="https://img.shields.io/badge/pipeline-8_stages-brightgreen?style=for-the-badge" alt="Pipeline"/>
   <img src="https://img.shields.io/badge/version-2.0.0-orange?style=for-the-badge" alt="Version"/>
@@ -24,7 +28,8 @@
 - [Triết Lý Thiết Kế](#triết-lý-thiết-kế)
 - [Danh Sách 8 Agents](#danh-sách-8-agents)
 - [Kiến Trúc Pipeline 8 Giai Đoạn](#kiến-trúc-pipeline-8-giai-đoạn)
-- [Hướng Dẫn Cài Đặt & Sử Dụng](#hướng-dẫn-cài-đặt--sử-dụng)
+- [Cài Đặt Global (`~/.gemini/config/agents/`)](#cài-đặt-global--geminiconfigagents)
+- [Cách Mở Bảng Điều Khiển (`/agents`)](#cách-mở-bảng-điều-khiển-agents)
 - [Ví Dụ Thực Tế](#ví-dụ-thực-tế)
 - [Tips & Tricks: BA Dùng AI Vẽ Flow Diagrams](#tips--tricks-ba-dùng-ai-vẽ-flow-diagrams)
 - [Cấu Trúc Thư Mục](#cấu-trúc-thư-mục)
@@ -36,7 +41,7 @@
 
 ## Giới Thiệu
 
-**Custom Agent AGY** là bộ sưu tập các **Custom Subagent System Prompts** được thiết kế để chạy trên nền tảng [Antigravity CLI](https://antigravity.dev) (v1.1.6+) hoặc bất kỳ AI Coding Agent nào hỗ trợ cơ chế `define_subagent` / `invoke_subagent`.
+**Custom Agent AGY** là bộ sưu tập các **Custom System Prompts** được thiết kế để chạy trên nền tảng [Antigravity CLI](https://antigravity.dev) (v1.1.6+) hoặc bất kỳ AI Coding Agent nào hỗ trợ cơ chế `define_subagent` / `invoke_subagent`.
 
 **Dành cho ai?**
 - Solo developers muốn có quy trình phát triển chuẩn chỉnh như team chuyên nghiệp
@@ -260,64 +265,55 @@ sequenceDiagram
     AG-->>User: ✅ Báo cáo hoàn thành
 ```
 
-### Bản đồ thực thi song song
+---
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ Timeline    T1      T2           T3        T4       T5     T6  │
-│            ┌───┐  ┌───┬───┐   ┌───┐     ┌───┐   ┌───┬───┐┌──┐│
-│ Agents     │ ① │→ │ ② │ ③ │→ │ ④ │  →  │ ⑤ │→ │ ⑥ │ ⑦ ││⑧ ││
-│            │BA │  │Ar │QC │   │Res│     │Dev│   │Log│Doc││Gt ││
-│            └───┘  └───┴───┘   └───┘     └───┘   └───┴───┘└──┘│
-│                   (parallel)                     (parallel)    │
-└─────────────────────────────────────────────────────────────────┘
+## Cài Đặt Global (`~/.gemini/config/agents/`)
+
+Theo tài liệu chính thức của **Antigravity CLI**, để 8 custom agents có sẵn ở **tất cả thư mục / dự án**, đặt chúng vào thư mục cấu hình global:
+
+- **Windows:** `%USERPROFILE%\.gemini\config\agents\{agent_name}\agent.md`
+- **Linux/macOS:** `~/.gemini/config/agents/{agent_name}/agent.md`
+
+### Lệnh cài đặt nhanh 1 dòng (PowerShell)
+
+```powershell
+$src = "path\to\custom_agent_agy"; $dest = "$env:USERPROFILE\.gemini\config\agents"
+@("ba-requirements-specialist","api-db-architect","qc-verification-specialist","codebase-researcher","dev-security-implementer","logging-observability-specialist","docs-readme-specialist","devops-git-specialist") | ForEach-Object { New-Item -ItemType Directory -Path "$dest\$_" -Force | Out-Null; Copy-Item "$src\$_.md" "$dest\$_\agent.md" -Force }
 ```
 
 ---
 
-## Hướng Dẫn Cài Đặt & Sử Dụng
+## Cách Mở Bảng Điều Khiển (`/agents`)
 
-### Yêu cầu
-
-- [Antigravity CLI](https://antigravity.dev) >= 1.1.6 (hỗ trợ Custom Agents)
-- Hoặc bất kỳ AI coding agent hỗ trợ `define_subagent` / `invoke_subagent`
-
-### Cài đặt
+Trong Antigravity CLI, gõ lệnh sau để mở giao diện quản lý agents:
 
 ```bash
-git clone https://github.com/Le-Ngoc-Tu/custom_agent_agy.git
-cd custom_agent_agy
+/agents
 ```
 
-### 3 Cách Sử Dụng
+### Màn hình quản lý Agents (TUI Panel)
 
-#### Cách 1: Kích hoạt toàn bộ Pipeline (Khuyến nghị)
-
-Trong phiên Antigravity, yêu cầu:
+Giao diện sẽ tự động quét và hiển thị cả 8 custom agents dưới mục **Available Agents**:
 
 ```
-Hãy dùng bộ custom agents trong E:\agent_resources\antigravity_custom_agents\
-theo quy trình 8 giai đoạn để phát triển tính năng:
-
-"Hệ thống đăng nhập/đăng ký với JWT, phân quyền RBAC, reset password qua email"
+┌─────────────────────────────────────────────────────────────┐
+│                       AGENTS MANAGER                        │
+├─────────────────────────────────────────────────────────────┤
+│ Available Agents                                            │
+│   ● Default Agent                                           │
+│     ba-requirements-specialist                              │
+│     api-db-architect                                        │
+│     qc-verification-specialist                              │
+│     codebase-researcher                                     │
+│     dev-security-implementer                                │
+│     logging-observability-specialist                        │
+│     docs-readme-specialist                                  │
+│     devops-git-specialist                                   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-Antigravity sẽ tự động đọc các file `.md`, nạp từng agent qua `define_subagent` và điều phối theo pipeline.
-
-#### Cách 2: Kích hoạt Agent đơn lẻ
-
-```
-Hãy đọc file ba-requirements-specialist.md và dùng nó làm system prompt
-để define_subagent, rồi invoke nó để phân tích yêu cầu cho tính năng:
-"Module quản lý đơn hàng với workflow: Draft → Confirmed → Shipping → Delivered"
-```
-
-#### Cách 3: Tham chiếu như Knowledge Base
-
-```
-Khi viết code cho API endpoint mới, hãy tham khảo file api-db-architect.md
-để tuân thủ error format RFC 7807 và logging contract standards.
-```
+1. **Chọn Agent:** Phím `↑ / ↓` để chọn, nhấn `Enter` để kích hoạt (`●` biểu tượng màu xanh).
+2. **Áp dụng:** Nhấn `Esc` để đóng panel và bắt đầu chat với agent được chọn.
 
 ---
 
@@ -348,25 +344,6 @@ flowchart TD
     AR1 & AR2 & AR3 --> DEV1 & DEV2
 ```
 
-### Ví dụ output từ ⑥ Logging Agent
-
-```json
-{
-  "timestamp": "2026-07-25T14:00:00.000Z",
-  "level": "info",
-  "service": "auth-service",
-  "traceId": "req_abc123",
-  "event": "auth.login.success",
-  "metadata": {
-    "userId": "usr_456",
-    "method": "POST",
-    "path": "/api/v1/auth/login",
-    "statusCode": 200,
-    "duration": 145
-  }
-}
-```
-
 ---
 
 ## Tips & Tricks: BA Dùng AI Vẽ Flow Diagrams
@@ -375,85 +352,31 @@ flowchart TD
 
 ### Vấn đề thực tế
 
-Khi làm BA, bạn thường phải giải thích luồng hệ thống cho cả 2 phía:
+Khi làm BA, bạn thường đứng giữa ngã ba đường:
 - **Dev team** cần endpoint, payload, error codes
 - **Stakeholders** chỉ cần biết "data chạy từ đâu sang đâu"
 
 ### Giải pháp: Dùng AI Agent + Mermaid/PlantUML
 
-**Bước 1:** Yêu cầu agent vẽ flow bằng Mermaid:
-
-```
-Vẽ API flow diagram cho Loan Origination System:
-1. User nộp form → Frontend
-2. Frontend gọi Middleware
-3. Middleware gọi Credit Bureau API lấy credit score
-4. Middleware gửi data tổng hợp sang Underwriting API
-5. Underwriting trả quyết định → User
-
-Dùng Mermaid sequence diagram, label rõ từng component.
-```
-
-**Output Mermaid:**
-
 ```mermaid
 sequenceDiagram
-    actor User as 👤 Khách hàng
+    actor Customer as 👤 Khách hàng
     participant FE as Frontend
     participant MW as Middleware
     participant CB as Credit Bureau API
     participant UW as Underwriting System
 
-    User->>FE: Nộp đơn vay (form data)
+    Customer->>FE: Nộp đơn vay (form data)
     FE->>MW: POST /api/v1/loans/apply
     MW->>CB: GET /credit-score?ssn=***
     CB-->>MW: { score: 720, history: "good" }
     MW->>UW: POST /underwrite { loan + credit_data }
-    UW-->>MW: { decision: "APPROVED", limit: 50000 }
+    UW-->>MW: { decision: "APPROVED", limit: 500M }
     MW-->>FE: { status: "approved", loanId: "LN-001" }
-    FE-->>User: Hiển thị kết quả: Đơn vay được duyệt ✅
+    FE-->>Customer: Hiển thị kết quả: Đơn vay được duyệt ✅
 ```
 
-**Bước 2:** Yêu cầu agent tóm tắt bằng ngôn ngữ nghiệp vụ:
-
-```
-Viết lại giải thích flow trên bằng ngôn ngữ nghiệp vụ cho stakeholders.
-```
-
-> **Output:** "Khi khách hàng nộp đơn xin vay, hệ thống tự động kiểm tra điểm tín dụng qua API của Trung tâm Thông tin Tín dụng. Sau đó, toàn bộ hồ sơ (thông tin cá nhân + điểm tín dụng) được gửi sang hệ thống Thẩm định để ra quyết định phê duyệt. Kết quả cuối cùng hiển thị lại cho khách hàng trên giao diện."
-
-**Bước 3:** Kết hợp `⑦ Docs Agent` + tool `generate_image` để tạo hình ảnh cho tài liệu BRD:
-
-```
-Dùng agent docs-readme-specialist với tool generate_image
-để tạo ảnh architecture diagram chuyên nghiệp cho tài liệu BRD
-dự án Loan Origination System.
-```
-
-> **Kết quả:** Combo 1 hình trực quan cho Dev + 1 đoạn giải thích cho Sếp → bê thẳng vào BRD hoặc Confluence.
-
-### PlantUML Alternative
-
-Nếu team dùng PlantUML thay vì Mermaid, cùng flow trên sẽ là:
-
-```plantuml
-@startuml
-actor "Khách hàng" as User
-participant "Frontend" as FE
-participant "Middleware" as MW
-participant "Credit Bureau" as CB
-participant "Underwriting" as UW
-
-User -> FE: Nộp đơn vay
-FE -> MW: POST /api/v1/loans/apply
-MW -> CB: GET /credit-score
-CB --> MW: score: 720
-MW -> UW: POST /underwrite
-UW --> MW: decision: APPROVED
-MW --> FE: loanId: LN-001
-FE --> User: Đơn vay được duyệt ✅
-@enduml
-```
+> **Tóm tắt nghiệp vụ cho Stakeholders:** "Khi khách hàng nộp đơn xin vay, hệ thống tự động kiểm tra điểm tín dụng qua API của Trung tâm Thông tin Tín dụng. Sau đó, toàn bộ hồ sơ được gửi sang hệ thống Thẩm định tự động để ra quyết định phê duyệt."
 
 ---
 
@@ -461,7 +384,8 @@ FE --> User: Đơn vay được duyệt ✅
 
 ```
 custom_agent_agy/
-├── README.md                              # Tài liệu chính (file này)
+├── README.md                              # Tài liệu chính (Tiếng Việt)
+├── README_EN.md                           # Main English README
 ├── .gitignore                             # Git ignore rules
 ├── full_lifecycle_workflow_guide.md        # Hướng dẫn điều phối 8 giai đoạn
 ├── assets/
@@ -487,6 +411,7 @@ custom_agent_agy/
 
 | Tài liệu | Mô tả |
 |-----------|--------|
+| [English Version](README_EN.md) | Full English documentation of Custom Agent AGY |
 | [Workflow Guide](full_lifecycle_workflow_guide.md) | Hướng dẫn điều phối đầy đủ 8 giai đoạn + Parallel Execution Map |
 | [Usage Guide](docs/USAGE_GUIDE.md) | Hướng dẫn chi tiết từng agent: mô tả, prompt mẫu, output mẫu |
 | [BA AI Flow Tips](docs/TIPS_BA_AI_FLOW.md) | Mẹo BA dùng AI vẽ Flow Diagrams + tạo tài liệu chuyên nghiệp |
@@ -496,20 +421,9 @@ custom_agent_agy/
 ## Contributing
 
 1. Fork repository
-2. Tạo branch: `git checkout -b feature/agent-improvement`
-3. Commit theo **Conventional Commits**: `feat(agent): add new capability`
+2. Tạo branch: `git checkout -b feature/agent-name-improvement`
+3. Commit theo Conventional Commits: `feat(agent): add new capability`
 4. Push và tạo Pull Request
-
-**Conventional Commits format:**
-
-```
-feat(scope): tính năng mới
-fix(scope): sửa lỗi
-docs: thay đổi tài liệu
-refactor(scope): tái cấu trúc
-test(scope): thêm/sửa tests
-chore: build, CI, dependencies
-```
 
 ---
 
