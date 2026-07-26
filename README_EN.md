@@ -291,18 +291,30 @@ custom_agent_agy/
 ├── README.md                              # Main Vietnamese README
 ├── README_EN.md                           # Main English README
 ├── README_ZH.md                           # Main Chinese README
+├── LICENSE                                # MIT License
+├── CONTRIBUTING.md                        # Contribution guidelines
+├── CODE_OF_CONDUCT.md                     # Community code of conduct
+├── SECURITY.md                            # Security policy
 ├── .gitignore                             # 2-Layer Git ignore
 ├── full_lifecycle_workflow_guide.md        # 8-stage workflow guide
+│
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml                 # Bug report template
+│   │   └── feature_request.yml            # Feature request template
+│   ├── PULL_REQUEST_TEMPLATE.md           # PR checklist
+│   └── workflows/
+│       └── ci.yml                         # GitHub Actions CI
+│
 ├── assets/
 │   └── banner.jpg                         # Repository banner image
 ├── scripts/
-│   ├── setup_global.ps1                   # 1-Click setup script for Windows
-│   └── setup_global.sh                    # 1-Click setup script for Linux/macOS
+│   ├── setup_global.ps1                   # 1-Click setup for Windows
+│   └── setup_global.sh                    # 1-Click setup for Linux/macOS
 ├── docs/
 │   ├── USAGE_GUIDE.md                     # Per-agent usage guide
 │   └── TIPS_BA_AI_FLOW.md                 # BA AI flow diagrams guide
 │
-├── # --- 8 Custom Agent Prompts ---
 ├── ba-requirements-specialist.md          # ① BA Agent
 ├── api-db-architect.md                    # ② Architect Agent
 ├── qc-verification-specialist.md          # ③ QC Agent

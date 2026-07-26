@@ -409,18 +409,30 @@ custom_agent_agy/
 ├── README.md                              # Tài liệu chính (Tiếng Việt)
 ├── README_EN.md                           # Main English README
 ├── README_ZH.md                           # 简体中文 README
-├── .gitignore                             # Git ignore rules
+├── LICENSE                                # MIT License
+├── CONTRIBUTING.md                        # Hướng dẫn đóng góp
+├── CODE_OF_CONDUCT.md                     # Quy tắc ứng xử cộng đồng
+├── SECURITY.md                            # Chính sách bảo mật
+├── .gitignore                             # Git ignore rules (2 lớp)
 ├── full_lifecycle_workflow_guide.md        # Hướng dẫn điều phối 8 giai đoạn
+│
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml                 # Mẫu báo lỗi
+│   │   └── feature_request.yml            # Mẫu đề xuất tính năng
+│   ├── PULL_REQUEST_TEMPLATE.md           # Checklist PR
+│   └── workflows/
+│       └── ci.yml                         # GitHub Actions CI
+│
 ├── assets/
 │   └── banner.jpg                         # Banner image cho README
 ├── scripts/
-│   ├── setup_global.ps1                   # 1-Click setup script cho Windows
-│   └── setup_global.sh                    # 1-Click setup script cho Linux/macOS
+│   ├── setup_global.ps1                   # 1-Click setup cho Windows
+│   └── setup_global.sh                    # 1-Click setup cho Linux/macOS
 ├── docs/
 │   ├── USAGE_GUIDE.md                     # Hướng dẫn sử dụng chi tiết
 │   └── TIPS_BA_AI_FLOW.md                 # Tips BA dùng AI vẽ Flow Diagrams
 │
-├── # --- 8 Custom Agent Prompts ---
 ├── ba-requirements-specialist.md          # ① BA Agent
 ├── api-db-architect.md                    # ② Architect Agent
 ├── qc-verification-specialist.md          # ③ QC Agent

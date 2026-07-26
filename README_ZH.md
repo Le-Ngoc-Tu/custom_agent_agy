@@ -280,12 +280,110 @@ bash scripts/setup_global.sh
 
 ---
 
+## 实际应用示例
+
+### 用例：构建认证系统 (Authentication)
+
+```mermaid
+flowchart TD
+    subgraph "① BA Agent 分析需求"
+        BA1["User Story: As a user,\nI want to login with email/password"]
+        BA2["AC: Given valid credentials\nWhen POST /auth/login\nThen return JWT tokens"]
+        BA3["NFR: Rate limit 5 req/min\nLog every login attempt"]
+    end
+
+    subgraph "② Architect Agent 设计架构"
+        AR1["POST /api/v1/auth/login\nPOST /api/v1/auth/register\nPOST /api/v1/auth/refresh"]
+        AR2["users table: id, email,\npassword_hash, role, created_at"]
+        AR3["Logging Contract:\nauth.login.success → INFO\nauth.login.failed → WARN"]
+    end
+
+    subgraph "⑤ Developer Agent 编码实现"
+        DEV1["authService.ts\nauthController.ts\nauthMiddleware.ts"]
+        DEV2["Argon2 hashing\nJWT access + refresh\nZod validation"]
+    end
+
+    BA1 & BA2 & BA3 --> AR1 & AR2 & AR3
+    AR1 & AR2 & AR3 --> DEV1 & DEV2
+```
+
+---
+
+## BA 技巧：如何使用 AI 绘制流程图
+
+> **实用技巧：** 除了编写代码，本 Agent 套件还支持 BA/PM 利用 AI 创建专业技术文档与可视化流程图。
+
+### 解决方案：使用 AI Agent + Mermaid/PlantUML
+
+```mermaid
+sequenceDiagram
+    actor Customer as 👤 客户
+    participant FE as 前端
+    participant MW as 中间件
+    participant CB as 征信局 API
+    participant UW as 审批系统
+
+    Customer->>FE: 提交贷款申请 (表单数据)
+    FE->>MW: POST /api/v1/loans/apply
+    MW->>CB: GET /credit-score?ssn=***
+    CB-->>MW: { score: 720, history: "good" }
+    MW->>UW: POST /underwrite { loan + credit_data }
+    UW-->>MW: { decision: "APPROVED", limit: 500万 }
+    MW-->>FE: { status: "approved", loanId: "LN-001" }
+    FE-->>Customer: 显示结果：贷款申请已批准 ✅
+```
+
+---
+
+## 目录结构
+
+```
+custom_agent_agy/
+├── README.md                              # 越南语 README
+├── README_EN.md                           # 英文 README
+├── README_ZH.md                           # 简体中文 README
+├── LICENSE                                # MIT License
+├── CONTRIBUTING.md                        # 贡献指南
+├── CODE_OF_CONDUCT.md                     # 社区行为准则
+├── SECURITY.md                            # 安全策略
+├── .gitignore                             # Git 忽略规则 (双层)
+├── full_lifecycle_workflow_guide.md        # 8 阶段工作流指南
+│
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml                 # Bug 报告模板
+│   │   └── feature_request.yml            # 功能请求模板
+│   ├── PULL_REQUEST_TEMPLATE.md           # PR 检查清单
+│   └── workflows/
+│       └── ci.yml                         # GitHub Actions CI
+│
+├── assets/
+│   └── banner.jpg                         # 仓库 Banner 图片
+├── scripts/
+│   ├── setup_global.ps1                   # Windows 一键安装脚本
+│   └── setup_global.sh                    # Linux/macOS 一键安装脚本
+├── docs/
+│   ├── USAGE_GUIDE.md                     # 各 Agent 详细使用手册
+│   └── TIPS_BA_AI_FLOW.md                 # BA AI 流程图技巧
+│
+├── ba-requirements-specialist.md          # ① BA Agent
+├── api-db-architect.md                    # ② Architect Agent
+├── qc-verification-specialist.md          # ③ QC Agent
+├── codebase-researcher.md                 # ④ Researcher Agent
+├── dev-security-implementer.md            # ⑤ Developer Agent
+├── logging-observability-specialist.md    # ⑥ Logging Agent
+├── docs-readme-specialist.md              # ⑦ Docs Agent
+└── devops-git-specialist.md               # ⑧ DevOps Agent
+```
+
+---
+
 ## 补充文档
 
 | 文档 | 描述 |
 |------|------|
-| [English Version](README_EN.md) | Custom Agent AGY 英文完整文档 |
-| [Vietnamese Version](README.md) | Custom Agent AGY 越南语完整文档 |
+| [英文版 (English)](README_EN.md) | Custom Agent AGY 英文完整文档 |
+| [越南语版 (Vietnamese)](README.md) | Custom Agent AGY 越南语完整文档 |
 | [Workflow Guide](full_lifecycle_workflow_guide.md) | 8 阶段流水线编排指南与并行执行规则 |
 | [Usage Guide](docs/USAGE_GUIDE.md) | 各 Agent 详细使用手册：目标、Prompt 模板与输出示例 |
 | [BA AI Flow Tips](docs/TIPS_BA_AI_FLOW.md) | BA 使用 AI 绘制流程图与撰写 BRD 文档指南 |
