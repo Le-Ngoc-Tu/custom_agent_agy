@@ -14,8 +14,9 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/agents-8-blue?style=for-the-badge" alt="Agents"/>
-  <img src="https://img.shields.io/badge/pipeline-8_stages-brightgreen?style=for-the-badge" alt="Pipeline"/>
-  <img src="https://img.shields.io/badge/version-2.0.0-orange?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/architecture-Graph_Topology-brightgreen?style=for-the-badge" alt="Architecture"/>
+  <img src="https://img.shields.io/badge/version-2.5.0-orange?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/orchestration-Google_ADK_2-blueviolet?style=for-the-badge" alt="Orchestration"/>
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License"/>
   <img src="https://img.shields.io/badge/platform-Antigravity_CLI-purple?style=for-the-badge" alt="Platform"/>
 </p>
@@ -25,7 +26,7 @@
 ## 目录
 
 - [项目概述](#项目概述)
-- [自动 Agent 选择与动态 Spawn 机制](#自动-agent-选择与动态-spawn-机制)
+- [确定性图编排架构 (ADK 2)](#确定性图编排架构-adk-2)
 - [详细设计哲学 DSL](#详细设计哲学-dsl)
 - [8 大 Agent 目录](#8-大-agent-目录)
 - [8 阶段流水线架构](#8-阶段流水线架构)
@@ -46,20 +47,38 @@
 
 ---
 
-## 自动 Agent 选择与动态 Spawn 机制
+## 确定性图编排架构 (ADK 2)
 
-在最新的 **Antigravity CLI (v1.1.6+)** 中，只需将 Custom Agent 安装至全局配置目录 (`~/.gemini/config/agents/`)，系统即可实现 **Orchestrator 动态 Spawn 协作**：
+在 **v2.5.0** 中，系统已全面升级为符合 Google ADK 2.0 标准的**确定性有向图编排模式 (Directed Graph Topology)**：
 
 ```mermaid
-flowchart TD
-    UserReq["👤 用户需求：'构建功能 X'"] --> Orch["🤖 主控 Agent (Orchestrator)"]
-    Orch -->|读取 YAML 元数据| Scan["🔍 扫描全局 Agents 目录\n~/.gemini/config/agents/"]
-    Scan --> AutoSelect["⚡ 根据角色与任务自动选择最佳 Agent"]
-    AutoSelect --> Spawn1["① 启动 ba-requirements-specialist"]
-    AutoSelect --> Spawn2["② 启动 api-db-architect (并行)"]
-    AutoSelect --> Spawn3["③ 启动 qc-verification-specialist (并行)"]
-    AutoSelect --> Spawn4["⑤ 启动 dev-security-implementer"]
-    AutoSelect --> Spawn5["... 按流水线依次启动后续 Agent"]
+graph TD
+    UserReq["👤 用户需求：'构建功能 X'"] --> NODE_BA["Node 1: ba-requirements-specialist<br/>模式: task desk"]
+    NODE_BA --> GATE_SPEC{"确定性门禁:<br/>需求与 AC 是否已验证?"}
+    
+    GATE_SPEC -- 需求不明确 --> NODE_BA
+    GATE_SPEC -- 验证通过 --> FORK_DESIGN["Fork: 并行技术设计分支"]
+    
+    FORK_DESIGN --> NODE_ARCH["Node 2a: api-db-architect<br/>模式: single_turn"]
+    FORK_DESIGN --> NODE_OBS["Node 2b: logging-observability-specialist<br/>模式: single_turn"]
+    FORK_DESIGN --> NODE_RES["Node 2c: codebase-researcher<br/>模式: dynamic exploration"]
+    
+    NODE_ARCH --> JOIN_DESIGN["JoinNode: 统一技术合同"]
+    NODE_OBS --> JOIN_DESIGN
+    NODE_RES --> JOIN_DESIGN
+    
+    JOIN_DESIGN --> NODE_DEV["Node 3: dev-security-implementer<br/>模式: execution"]
+    NODE_DEV --> NODE_QC["Node 4: qc-verification-specialist<br/>模式: verification & router"]
+    
+    NODE_QC --> ROUTER_QC{"确定性路由器:<br/>测试 Exit Code == 0?"}
+    ROUTER_QC -- "Exit Code != 0 & 循环 < 3<br/>Route: FIX_CYCLE" --> NODE_DEV
+    ROUTER_QC -- "循环 >= 3<br/>Route: CIRCUIT_BREAKER" --> STOP_CIRCUIT(("紧急熔断器:<br/>向用户报告错误"))
+    ROUTER_QC -- "Exit Code == 0<br/>Route: HANDOFF" --> FORK_HANDOFF["JoinNode: 并行交付分支"]
+    
+    FORK_HANDOFF --> NODE_DOCS["Node 5a: docs-readme-specialist"]
+    FORK_HANDOFF --> NODE_DEVOPS["Node 5b: devops-git-specialist"]
+    NODE_DOCS --> TERMINAL(("完成"))
+    NODE_DEVOPS --> TERMINAL
 ```
 
 ---

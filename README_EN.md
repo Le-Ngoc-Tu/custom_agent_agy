@@ -14,8 +14,9 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/agents-8-blue?style=for-the-badge" alt="Agents"/>
-  <img src="https://img.shields.io/badge/pipeline-8_stages-brightgreen?style=for-the-badge" alt="Pipeline"/>
-  <img src="https://img.shields.io/badge/version-2.0.0-orange?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/architecture-Graph_Topology-brightgreen?style=for-the-badge" alt="Architecture"/>
+  <img src="https://img.shields.io/badge/version-2.5.0-orange?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/orchestration-Google_ADK_2-blueviolet?style=for-the-badge" alt="Orchestration"/>
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License"/>
   <img src="https://img.shields.io/badge/platform-Antigravity_CLI-purple?style=for-the-badge" alt="Platform"/>
 </p>
@@ -24,42 +25,60 @@
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Auto Agent Selection & Dynamic Spawning](#auto-agent-selection--dynamic-spawning)
-- [Detailed Design Philosophy DSL](#detailed-design-philosophy-dsl)
-- [8 Agents Catalog](#8-agents-catalog)
+- [Introduction](#introduction)
+- [Deterministic Graph Orchestration & ADK 2](#deterministic-graph-orchestration--adk-2)
+- [Design Philosophy (DSL)](#design-philosophy-dsl)
+- [The 8 Custom Agents](#the-8-custom-agents)
 - [8-Stage Pipeline Architecture](#8-stage-pipeline-architecture)
-- [Automated 1-Click Global Installation](#automated-1-click-global-installation)
-- [How to Select Agents (`/agents` Panel)](#how-to-select-agents-agents-panel)
-- [Usage Examples](#usage-examples)
-- [Tips & Tricks: How BAs Use AI to Draw Flow Diagrams](#tips--tricks-how-bas-use-ai-to-draw-flow-diagrams)
-- [Project Structure](#project-structure)
+- [1-Click Global Installation](#1-click-global-installation)
+- [How to Access the Agent Panel (`/agents`)](#how-to-access-the-agent-panel-agents)
+- [Real-world Examples](#real-world-examples)
+- [Tips & Tricks: AI Flow Diagrams for BAs](#tips--tricks-ai-flow-diagrams-for-bas)
+- [Repository Structure](#repository-structure)
 - [Additional Documentation](#additional-documentation)
 - [Contributing](#contributing)
 - [License](#license)
 
 ---
 
-## Overview
+## Introduction
 
 **Custom Agent AGY** is a production-grade collection of **Custom System Prompts** designed for [Antigravity CLI](https://antigravity.dev) (v1.1.6+) and compatible AI coding assistants supporting subagents and custom agent definitions.
 
 ---
 
-## Auto Agent Selection & Dynamic Spawning
+## Deterministic Graph Orchestration & ADK 2
 
-In **Antigravity CLI (v1.1.6+)**, once custom agents are installed in your global config (`~/.gemini/config/agents/`), Antigravity operates using **Orchestrator Dynamic Spawning**:
+In **v2.5.0**, the system transitions to **Deterministic Graph Orchestration** following Google ADK 2.0 standards:
 
 ```mermaid
-flowchart TD
-    UserReq["👤 User Prompt: 'Build feature X'"] --> Orch["🤖 Primary Agent (Orchestrator)"]
-    Orch -->|Reads YAML metadata| Scan["🔍 Scans Global Agents\n~/.gemini/config/agents/"]
-    Scan --> AutoSelect["⚡ Automatically selects matching agents\nbased on roles and tasks"]
-    AutoSelect --> Spawn1["① Spawn ba-requirements-specialist"]
-    AutoSelect --> Spawn2["② Spawn api-db-architect (parallel)"]
-    AutoSelect --> Spawn3["③ Spawn qc-verification-specialist (parallel)"]
-    AutoSelect --> Spawn4["⑤ Spawn dev-security-implementer"]
-    AutoSelect --> Spawn5["... Spawn remaining pipeline agents"]
+graph TD
+    UserReq["👤 User: 'Build feature X'"] --> NODE_BA["Node 1: ba-requirements-specialist<br/>Mode: task desk"]
+    NODE_BA --> GATE_SPEC{"Deterministic Gate:<br/>Spec & AC Validated?"}
+    
+    GATE_SPEC -- Clarification needed --> NODE_BA
+    GATE_SPEC -- Validated --> FORK_DESIGN["Fork: Parallel Technical Design"]
+    
+    FORK_DESIGN --> NODE_ARCH["Node 2a: api-db-architect<br/>Mode: single_turn"]
+    FORK_DESIGN --> NODE_OBS["Node 2b: logging-observability-specialist<br/>Mode: single_turn"]
+    FORK_DESIGN --> NODE_RES["Node 2c: codebase-researcher<br/>Mode: dynamic exploration"]
+    
+    NODE_ARCH --> JOIN_DESIGN["JoinNode: Unified Tech Contract"]
+    NODE_OBS --> JOIN_DESIGN
+    NODE_RES --> JOIN_DESIGN
+    
+    JOIN_DESIGN --> NODE_DEV["Node 3: dev-security-implementer<br/>Mode: execution"]
+    NODE_DEV --> NODE_QC["Node 4: qc-verification-specialist<br/>Mode: verification & router"]
+    
+    NODE_QC --> ROUTER_QC{"Deterministic Router:<br/>Test Exit Code == 0?"}
+    ROUTER_QC -- "Exit Code != 0 & Loop < 3<br/>Route: FIX_CYCLE" --> NODE_DEV
+    ROUTER_QC -- "Loop >= 3<br/>Route: CIRCUIT_BREAKER" --> STOP_CIRCUIT(("EMERGENCY STOP:<br/>Report to User"))
+    ROUTER_QC -- "Exit Code == 0<br/>Route: HANDOFF" --> FORK_HANDOFF["JoinNode: Parallel Handoff"]
+    
+    FORK_HANDOFF --> NODE_DOCS["Node 5a: docs-readme-specialist"]
+    FORK_HANDOFF --> NODE_DEVOPS["Node 5b: devops-git-specialist"]
+    NODE_DOCS --> TERMINAL(("Done"))
+    NODE_DEVOPS --> TERMINAL
 ```
 
 ---

@@ -14,8 +14,9 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/agents-8-blue?style=for-the-badge" alt="Agents"/>
-  <img src="https://img.shields.io/badge/pipeline-8_stages-brightgreen?style=for-the-badge" alt="Pipeline"/>
-  <img src="https://img.shields.io/badge/version-2.0.0-orange?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/architecture-Graph_Topology-brightgreen?style=for-the-badge" alt="Architecture"/>
+  <img src="https://img.shields.io/badge/version-2.5.0-orange?style=for-the-badge" alt="Version"/>
+  <img src="https://img.shields.io/badge/orchestration-Google_ADK_2-blueviolet?style=for-the-badge" alt="Orchestration"/>
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License"/>
   <img src="https://img.shields.io/badge/platform-Antigravity_CLI-purple?style=for-the-badge" alt="Platform"/>
 </p>
@@ -46,20 +47,38 @@
 
 ---
 
-## Cơ Chế Tự Động Chọn Agent & Spawn Subagents
+## Cơ Chế Điều Phối Đồ Thị Xác Định (Deterministic Graph Orchestration & ADK 2)
 
-Trong phiên bản mới nhất của **Antigravity CLI (v1.1.6+)**, khi các custom agents đã được cài đặt vào hệ thống Global (`~/.gemini/config/agents/`), Antigravity sẽ tự động hoạt động theo cơ chế **Orchestrator Dynamic Spawning**:
+Trong phiên bản **v2.5.0**, hệ thống nâng cấp toàn diện từ chuỗi tuần tự đơn giản sang **Mô hình Đồ thị Điều phối Xác định (Directed Graph Topology)** theo chuẩn Google ADK 2.0:
 
 ```mermaid
-flowchart TD
-    UserReq["👤 Người dùng: 'Xây dựng tính năng X'"] --> Orch["🤖 Primary Agent (Orchestrator)"]
-    Orch -->|Đọc metadata YAML frontmatter| Scan["🔍 Quét danh sách Global Agents\n~/.gemini/config/agents/"]
-    Scan --> AutoSelect["⚡ Tự động chọn Agent phù hợp\ntheo vai trò và nhiệm vụ"]
-    AutoSelect --> Spawn1["① Spawn ba-requirements-specialist"]
-    AutoSelect --> Spawn2["② Spawn api-db-architect (song song)"]
-    AutoSelect --> Spawn3["③ Spawn qc-verification-specialist (song song)"]
-    AutoSelect --> Spawn4["⑤ Spawn dev-security-implementer"]
-    AutoSelect --> Spawn5["... Spawn các agents còn lại theo pipeline"]
+graph TD
+    UserReq["👤 Người dùng: 'Xây dựng tính năng X'"] --> NODE_BA["Node 1: ba-requirements-specialist<br/>Mode: task desk"]
+    NODE_BA --> GATE_SPEC{"Deterministic Gate:<br/>Spec & AC Validated?"}
+    
+    GATE_SPEC -- Chưa đủ thông tin --> NODE_BA
+    GATE_SPEC -- Hợp lệ --> FORK_DESIGN["Fork: Thiết kế kỹ thuật song song"]
+    
+    FORK_DESIGN --> NODE_ARCH["Node 2a: api-db-architect<br/>Mode: single_turn"]
+    FORK_DESIGN --> NODE_OBS["Node 2b: logging-observability-specialist<br/>Mode: single_turn"]
+    FORK_DESIGN --> NODE_RES["Node 2c: codebase-researcher<br/>Mode: dynamic exploration"]
+    
+    NODE_ARCH --> JOIN_DESIGN["JoinNode: Hợp đồng Kỹ thuật"]
+    NODE_OBS --> JOIN_DESIGN
+    NODE_RES --> JOIN_DESIGN
+    
+    JOIN_DESIGN --> NODE_DEV["Node 3: dev-security-implementer<br/>Mode: execution"]
+    NODE_DEV --> NODE_QC["Node 4: qc-verification-specialist<br/>Mode: verification & router"]
+    
+    NODE_QC --> ROUTER_QC{"Deterministic Router:<br/>Test Exit Code == 0?"}
+    ROUTER_QC -- "Exit Code != 0 & Loop < 3<br/>Route: FIX_CYCLE" --> NODE_DEV
+    ROUTER_QC -- "Loop >= 3<br/>Route: CIRCUIT_BREAKER" --> STOP_CIRCUIT(("DỪNG KHẨN CẤP:<br/>Báo cáo Lỗi cho User"))
+    ROUTER_QC -- "Exit Code == 0<br/>Route: HANDOFF" --> FORK_HANDOFF["JoinNode: Bàn giao song song"]
+    
+    FORK_HANDOFF --> NODE_DOCS["Node 5a: docs-readme-specialist"]
+    FORK_HANDOFF --> NODE_DEVOPS["Node 5b: devops-git-specialist"]
+    NODE_DOCS --> TERMINAL(("Hoàn thành"))
+    NODE_DEVOPS --> TERMINAL
 ```
 
 ---
